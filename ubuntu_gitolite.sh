@@ -21,8 +21,7 @@ sudo -u git -H git clone git://github.com/gitlabhq/gitolite /home/git/gitolite
 # install gitolite
 sudo -u git -H /home/git/gitolite/src/gl-system-install
 
-
 # Setup (Dont forget to set umask as 0007!!)
-sudo -u git -H /home/git/bin/gl-setup /home/git/rails.pub
+sudo -u git -H sh -c "PATH=/home/git/bin:$PATH; gl-setup ~/rails.pub"
 
 echo "Done"
