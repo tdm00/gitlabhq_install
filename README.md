@@ -6,19 +6,6 @@ sudo apt-get update
 sudo apt-get dist-upgrade -y
 </pre>
 
-#### Install VMWare Tools ####
-<pre>
-sudo apt-get install dkms build-essential gcc linux-headers-$(uname -r) -y
-sudo mkdir -p /media/cdrom
-sudo mount /dev/cdrom /media/cdrom
-cp /media/cdrom/VM* /tmp
-sudo umount /media/cdrom
-cd /tmp
-tar -xzvf VMware*.gz
-cd vmware-tools-distrib/
-sudo ./vmware-install.pl -d
-</pre>
-
 #### Dedicated gitlabhq user account ####
 Next we need to create a dedicated gitlabhq user account to run the application, set a password for this account and add it to the admin group so it can perform root actions.
 <pre>
@@ -26,7 +13,7 @@ sudo useradd -s /bin/bash -m -G admin gitlabhq
 sudo passwd gitlabhq
 </pre>
 
-Now login as the gitlabhq users we just created.  When prompted to accept the authenticity of the RSA key fingerprint type "yes"
+Now login as the gitlabhq user we just created.  When prompted to accept the authenticity of the RSA key fingerprint type "yes"
 <pre>
 ssh gitlabhq@localhost
 </pre>
@@ -37,7 +24,7 @@ Now we'll install the git version control system so we can clone repositories an
 sudo aptitude install git-core postfix -y
 </pre>
 
-Now configure Git with some global variables that will be used w hen gitlabhq performs a `git push` operation.  You can change the name and email address below if you wish:
+Now configure Git with some global variables that will be used when gitlabhq performs a `git push` operation.  You can change the name and email address below if you wish:
 <pre>
 git config --global user.email "admin@local.host"
 git config --global user.name "GitLabHQ Admin User"
@@ -84,7 +71,7 @@ Find the line that reads:
 <pre>
 REPO_UMASK = 0077;
 </pre>
-Move over the first "7" character, press the "i" key on your keyboard to go into INSERT mode.  Type a "0", then remove the "7" so it now reads:
+If the install opened VIM, move over the first "7" character, press the "i" key on your keyboard to go into INSERT mode.  Type a "0", then remove the "7" so it now reads:
 <pre>
 REPO_UMASK = 0007;
 </pre>
@@ -92,8 +79,8 @@ Press the Escape key once, then type the ":" to enter COMMAND mode.  Now type "w
 
 You now need to change the directory privileges on the /repositories directory so GitLabHQ can use them:
 <pre>
-sudo chmod -R 770 /home/git/repositories/
-sudo chown -R git:git /home/git/repositories/
+sudo chmod -R g+rwX ~git/repositories/
+sudo chown -R git:git ~git/repositories/
 </pre>
 
 Next we need to logout of the system to allow environment settings to be set upon the next time we login.
@@ -116,7 +103,7 @@ gitlabhq_install/ubuntu_gitlab.sh
 #### Configure GitLabHQ ####
 You can configure GitLabHQ by editing the `gitlab.yml` file.  One of the changes you'll want to make is to set your computer name that GitLabHQ is running on, if not localhost, so the instructions to users for connecting to repositories is correct.
 <pre>
-nano /home/gitlabhq/gitlabhq/gitlab.yml
+nano ~gitlabhq/gitlabhq/gitlab.yml
 </pre>
 
 Change the host value to whatever your servers fully qualified domain name (FQDN) is.  So for example if I'm running GitLabHQ on a server named "gitlabhq.corp.com" I'd change the value:
@@ -147,7 +134,7 @@ git_host:
 #### Running GitLabHQ ####
 Now that we have GitLabHQ installed, let's start the application using WEBrick (even if you'll use something else later) so we can login and accept an RSA key, then confirm it works.
 <pre>
-cd /home/gitlabhq/gitlabhq
+cd ~gitlabhq/gitlabhq
 bundle exec rails s -e production
 </pre>
 
@@ -158,3 +145,138 @@ Now you can login to your server by pointing your web browser to http://<server_
 
 #### Important! ####
 You should now create a new **PROJECT**.  It's important to note that when you add this project the *FIRST TIME* you need to type "yes" on the console where you started the application running.
+  
+  
+### Installing nginx ###
+Login as the gitlabhq user and then execute the following commands:
+<pre>
+sudo gem install passenger
+sudo passenger-install-nginx-module
+</pre>
+
+### Configure nginx ###
+We need to edit the nginx configuration file so it points to the GitLabHQ public folder to run the application.  Open the configuration file in the editor:
+<pre>
+sudo nano /opt/nginx/conf/nginx.conf
+</pre>
+
+Now locate the section for the server configuration and make the following changes:
+
+* Change the `server_name` key to your server's fully qualified domain name (FQDN), so in this example the server is gitlabhq.corp.com
+* Change the `root` key to the location of the GitLabHQ __public__ folder, this is important!
+* Add the key/value `passenger_enabled on;`
+
+<pre>
+    server {
+        listen       80;
+        server_name  gitlabhq.corp.com;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+            root   /home/gitlabhq/gitlabhq/public;
+            index  index.html index.htm;
+            passenger_enabled on;
+        }
+</pre>
+
+Also on the very top of the file, add the first line that specifies we'll run the server as the gitlabhq user account:
+<pre>
+user gitlabhq staff;
+</pre>
+
+Now we want to add a system user named `nginx` to run the server:
+<pre>
+sudo adduser --system --no-create-home --disabled-login --disabled-password --group nginx
+</pre>
+
+Next we want to setup the server to auto-start when the system starts.  To do this we'll:
+
+* Use an existing script to start nginx
+* Move the script to the system start directory
+* Set the correct permissions
+* Start the server.
+
+<pre>
+sudo wget -O init-deb.sh http://library.linode.com/assets/660-init-deb.sh
+sudo mv init-deb.sh /etc/init.d/nginx
+sudo chmod +x /etc/init.d/nginx
+sudo /usr/sbin/update-rc.d -f nginx defaults
+sudo /etc/init.d/nginx start
+</pre>
+
+
+### nginx over SSL ###
+So you want to run nginx over SSL huh?  Good choice!
+
+#### SSL Certificate ####
+First you'll need an SSL certificate, either self-signed or from a certificate authority like Verisign.  You can find directions on using certificates [here](https://help.ubuntu.com/10.04/serverguide/C/certificates-and-security.html)
+
+However, to keep it simple and helpful we'll use a self-signed certificate for our server gitlabhq.corp.com
+
+Let's create a 2048-bit certificate.  When prompted for the passphrase, enter something at least four characters in length.
+<pre>
+cd ~
+mkdir ssl
+cd ssl
+openssl genrsa -des3 -out server.key 2048
+</pre>
+
+Now let's get that passphrase out of the key file just to keep it secret.  You'll be prompted for the passphrase you entered when creating the certificate.
+<pre>
+openssl rsa -in server.key -out server.key.insecure
+mv server.key server.key.secure
+mv server.key.insecure server.key
+openssl req -new -key server.key -out server.csr
+</pre>
+ 
+ Now let's sign that shiny new certificate for 5 years
+ <pre>
+ openssl x509 -req -days 1825 -in server.csr -signkey server.key -out server.crt
+ </pre>
+ 
+ Finally we need to move the files to the correct locations on our Ubuntu server
+ <pre>
+sudo cp server.crt /etc/ssl/certs
+sudo cp server.key /etc/ssl/private
+ </pre>
+
+#### Configure nginx ####
+Open the nginx configuration file, scroll to the bottom and locate the commented out section for the HTTPS.   You can uncomment this section and specify your certificate location and server name as well as the location.  
+
+<pre>
+    # HTTPS server
+    #
+    server {
+        listen       443;
+        server_name  gitlabhq.corp.com;
+
+        ssl                  on;
+        ssl_certificate      /etc/ssl/certs/server.crt;
+        ssl_certificate_key  /etc/ssl/private/server.key;
+
+        ssl_session_timeout  5m;
+
+        ssl_protocols  SSLv2 SSLv3 TLSv1;
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers   on;
+
+        location / {
+            root   /home/gitlabhq/gitlabhq/public;
+            index  index.html index.htm;
+            passenger_enabled on;
+        }
+    }
+
+}
+</pre>
+
+Now we need to restart nginx for the configuration changes to take place
+<pre>
+sudo /etc/init.d/nginx stop
+sudo /etc/init.d/nginx start
+</pre>
+
+Enjoy!
