@@ -24,4 +24,7 @@ sudo -u git -H /home/git/gitolite/src/gl-system-install
 # Setup (Dont forget to set umask as 0007!!)
 sudo -u git -H sh -c "PATH=/home/git/bin:$PATH; gl-setup ~/rails.pub"
 
+sudo chmod -R g+rwX /home/git/repositories/
+sudo chown -R git:git /home/git/repositories/
+
 echo "Done"
