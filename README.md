@@ -137,7 +137,7 @@ git_host:
   system: gitolite
   admin_uri: git@localhost:gitolite-admin
   base_path: /home/git/repositories/
-  host: localhost
+  host: gitlab
   git_user: git
   # port: 22
 </pre>
@@ -177,6 +177,12 @@ Login as the gitlabhq user and then execute the following commands:
 sudo gem install passenger
 sudo passenger-install-nginx-module
 </pre>
+
+You'll now be prompted with the "Welcome to the Phusion Passenger Nginx module installer" screen.
+Press the "Enter" key to continue
+Select option "1" and press the "Enter" key to continue
+Accept the default installation directory by pressing the "Enter" key to continue
+
 
 ### Configure nginx ###
 We need to edit the nginx configuration file so it points to the GitLabHQ public folder to run the application.  Open the configuration file in the editor:
