@@ -1,10 +1,34 @@
 # Installing GitLabHQ on Ubuntu Server 11.10 #
+Install the Ubuntu Server software onto your physical system, or into a virtual system.
+During installation it will prompt you to create an initial user account, make this your own personal account.  We'll setup dedicated accounts for running GitLabHQ in the steps that follow.
 
 #### Download the latest server updates ####
 <pre>
 sudo apt-get update
 sudo apt-get dist-upgrade -y
 </pre>
+
+#### Install VMware Tools ####
+If you're running Ubuntu in a virtual systems under VMware, you'll want to install the VMware Tools for the best performance.  If you're not running this system under VMware, skip this section and move onto the next.
+Initiate the VMware Tools installation within your VMware Tools, then in the virtual system do the following:
+<pre>
+sudo apt-get update -y
+sudo apt-get dist-upgrade -y
+sudo apt-get install dkms build-essential gcc linux-headers-$(uname -r) -y
+sudo mkdir -p /media/cdrom
+sudo mount /dev/cdrom /media/cdrom
+cp /media/cdrom/VM* /tmp
+sudo umount /media/cdrom
+cd /tmp
+tar -xzvf VMware*.gz
+cd vmware-tools-distrib/
+sudo ./vmware-install.pl -d
+sudo apt-get autoremove -y
+sudo shutdown -r now
+</pre>
+
+Now log back into the system with your personal user account.
+
 
 #### Dedicated gitlabhq user account ####
 Next we need to create a dedicated gitlabhq user account to run the application, set a password for this account and add it to the admin group so it can perform root actions.
