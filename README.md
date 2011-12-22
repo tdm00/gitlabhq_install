@@ -127,7 +127,7 @@ gitlabhq_install/ubuntu_gitlab.sh
 #### Configure GitLabHQ ####
 You can configure GitLabHQ by editing the `gitlab.yml` file.  One of the changes you'll want to make is to set your computer name that GitLabHQ is running on, if not localhost, so the instructions to users for connecting to repositories is correct.
 <pre>
-nano ~gitlabhq/gitlabhq/gitlab.yml
+nano ~gitlabhq/gitlabhq/config/gitlab.yml
 </pre>
 
 Change the host value to whatever your servers fully qualified domain name (FQDN) is.  So for example if I'm running GitLabHQ on a server named "gitlabhq.corp.com" I'd change the value:
