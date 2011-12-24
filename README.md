@@ -150,6 +150,7 @@ You should now create a new **PROJECT**.  It's important to note that when you a
 ### Installing nginx ###
 Login as the gitlabhq user and then execute the following commands:
 <pre>
+sudo aptitude install libpcre3-dev
 sudo gem install passenger
 sudo passenger-install-nginx-module
 </pre>
