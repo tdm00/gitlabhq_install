@@ -3,7 +3,7 @@
 export RUBY_VERSION=ruby-1.9.2-p290
 export RAILS_ENV=production 
 
-yum install -y make openssh-clients gcc libxml2 libxml2-devel libxslt libxslt-devel python-devel wget readline-devel ncurses-devel gdbm-devel glibc-devel tcl-devel openssl-devel db4-devel byacc httpd gcc-c++ curl-devel openssl-devel zlib-devel httpd-devel apr-devel apr-util-devel gitolite sqlite-devel libicu-devel
+yum install -y make openssh-clients gcc libxml2 libxml2-devel libxslt libxslt-devel python-devel wget readline-devel ncurses-devel gdbm-devel glibc-devel tcl-devel openssl-devel db4-devel byacc httpd gcc-c++ curl-devel openssl-devel zlib-devel httpd-devel apr-devel apr-util-devel gitolite sqlite-devel libicu-devel redis
 
 sudo bash -s stable < <(curl -sk https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
 
