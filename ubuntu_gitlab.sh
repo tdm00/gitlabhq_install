@@ -1,4 +1,3 @@
-sudo apt-get install python-dev python-pip -y
 sudo pip install pygments
 sudo gem install bundler
 git clone git://github.com/gitlabhq/gitlabhq.git
